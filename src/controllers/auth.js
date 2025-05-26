@@ -14,7 +14,7 @@ export const registerUser = async (req, res) => {
         const user = new userModal({ name, email, password, role });
         const response = await user.save();
         const token = jwt.sign({ id: response._id }, JWT_KEY, { expiresIn: '7d' });
-        return res.status(200).send({ token: token });
+        return res.status(200).send({ token: token, name: response.name, email: response.email, role: response.role });
     } catch (error) {
         const { status, errorMessage } = handleException(error.message);
         if (status == 500) {
@@ -35,7 +35,7 @@ export const loginUser = async (req, res) => {
         //Generate token
         const token = jwt.sign({ id: user._id }, JWT_KEY, { expiresIn: "7d" })
         //Send response
-        return res.status(200).send({ token, id: user._id, email: user.email, role: user.role })
+        return res.status(200).send({ token, id: user._id, email: user.email, role: user.role, name: user.name })
     } catch (error) {
         const { status, errorMessage } = handleException(error.message);
         if (status == 500) {

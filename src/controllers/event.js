@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import eventModal from "../models/event.js"
 import registrationModal from "../models/registration.js";
 import { handleException } from "../utilities/handleException.js";
@@ -5,8 +6,7 @@ import { handleException } from "../utilities/handleException.js";
 export const getEvents = async (req, res) => {
     try {
         const events = await eventModal.find();
-
-        return res.status(200).send({ events });
+        return res.status(200).send(events);
     } catch (error) {
         const { status, errorMessage } = handleException(error.message);
         if (status == 500) {
@@ -36,9 +36,19 @@ export const registerForEvent = async (req, res) => {
     try {
         const userId = req.user._id;
         const eventId = req.params.id;
-        const registration = new registrationModal({ userId, eventId });
-        const response = await registration.save();
-        res.status(200).send({ message: "Registration Successfull" });
+        // Check if registration already exists
+        const existing = await registrationModal.findOne({ userId, eventId });
+
+        if (existing) {
+            // If it exists, delete it (toggle off)
+            await registrationModal.deleteOne({ _id: existing._id });
+            return res.status(200).send({ message: "Registration Cancelled" });
+        } else {
+            // If not, create a new one (toggle on)
+            const registration = new registrationModal({ userId, eventId });
+            await registration.save();
+            return res.status(200).send({ message: "Registration Successfull" });
+        }
     } catch (error) {
         const { status, errorMessage } = handleException(error.message);
         if (status == 500) {
@@ -53,7 +63,11 @@ export const getRegistrations = async (req, res) => {
     try {
         const userId = req.user._id;
         const registrations = await registrationModal.find({ userId });
-        res.status(200).send({ registrations });
+        const eventIds = registrations.map(reg => reg.eventId);
+        const events = await eventModal.find({
+            _id: { $in: eventIds.map(id => new mongoose.Types.ObjectId(id)) }
+        });
+        res.status(200).send({ events });
     } catch (error) {
         const { status, errorMessage } = handleException(error.message);
         if (status == 500) {

@@ -7,7 +7,8 @@ const eventSchema = new mongoose.Schema({
     time: { type: String },
     location: { type: String },
     imageUrl: { type: String },
-    contactNumber: { type: String }
+    contactNumber: { type: String },
+    type: { type: String }
 })
 
 const eventModal = mongoose.model("Event", eventSchema);
