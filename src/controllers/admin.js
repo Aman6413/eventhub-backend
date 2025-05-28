@@ -36,7 +36,7 @@ export const updateEvent = async (req, res) => {
         if (imageUrl) updateFields.imageUrl = imageUrl;
         if (contactNumber) updateFields.contactNumber = contactNumber;
         if (type) updateFields.type = type;
-        const updatedEvent = await eventModal.findByIdAndUpdate(id, { $set: updateFields }, { new: true } );
+        const updatedEvent = await eventModal.findByIdAndUpdate(id, { $set: updateFields }, { new: true });
         res.status(200).send(updatedEvent);
     } catch (error) {
         const { status, errorMessage } = handleException(error.message);

@@ -24,11 +24,11 @@ const validateToken = async (req, res, next) => {
         }
     } catch (error) {
         const { status, errorMessage } = handleException(error.message);
-                if (status == 500) {
-                    console.log(`Exception: ${error}`);
-                    return res.status(500).send();
-                }
-                else return res.status(status).send({ errorMessage })
+        if (status == 500) {
+            console.log(`Exception: ${error}`);
+            return res.status(500).send();
+        }
+        else return res.status(status).send({ errorMessage })
     }
 }
 
