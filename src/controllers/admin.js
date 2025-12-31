@@ -3,6 +3,7 @@ import registrationModal from "../models/registration.js";
 import userModal from "../models/user.js";
 import { ERROR_CODES } from "../utilities/constants.js";
 import { handleException } from "../utilities/handleException.js";
+import mongoose from "mongoose";
 
 export const createEvent = async (req, res) => {
     try {
@@ -56,32 +57,29 @@ export const deleteEvent = async (req, res) => {
 
 export const getEventRegistrations = async (req, res) => {
     try {
-        const eventId = req.params.id;
-
-        // Step 1: Find all registrations for the event
-        const registrations = await registrationModal.find({ eventId });
-
-        if (registrations.length === 0) {
-            return res.status(200).send([]);
-        }
-
-        // Step 2: Extract userIds
-        const userIds = registrations.map(reg => reg.userId);
-
-        // Step 3: Fetch user details
-        const users = await userModal.find(
-            { _id: { $in: userIds } },
-            { _id: 1, name: 1, email: 1 } // only return id and name
-        );
-
-        return res.status(200).send(users);
-
+      const eventId = req.params.id;
+  
+      const registrations = await registrationModal
+        .find({ eventId: new mongoose.Types.ObjectId(eventId) })
+        .populate("userId", "name email");
+  
+      if (!registrations.length) {
+        return res.status(200).send([]);
+      }
+  
+      // Extract populated users
+      const users = registrations.map(reg => reg.userId);
+  
+      return res.status(200).send(users);
+  
     } catch (error) {
-        const { status, errorMessage } = handleException(error.message);
-        if (status == 500) {
-            console.log(`Exception: ${error}`);
-            return res.status(500).send();
-        }
-        else return res.status(status).send({ errorMessage })
+      const { status, errorMessage } = handleException(error.message);
+      if (status === 500) {
+        console.log(`Exception: ${error}`);
+        return res.status(500).send();
+      } else {
+        return res.status(status).send({ errorMessage });
+      }
     }
-}
+  };
+  

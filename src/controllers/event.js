@@ -37,7 +37,10 @@ export const registerForEvent = async (req, res) => {
         const userId = req.user._id;
         const eventId = req.params.id;
         // Check if registration already exists
-        const existing = await registrationModal.findOne({ userId, eventId });
+        const existing = await registrationModal.findOne({
+            userId,
+            eventId: new mongoose.Types.ObjectId(eventId)
+        });
 
         if (existing) {
             // If it exists, delete it (toggle off)
@@ -45,7 +48,10 @@ export const registerForEvent = async (req, res) => {
             return res.status(200).send({ message: "Registration Cancelled" });
         } else {
             // If not, create a new one (toggle on)
-            const registration = new registrationModal({ userId, eventId });
+            const registration = new registrationModal({
+                userId,
+                eventId: new mongoose.Types.ObjectId(eventId)
+            });
             await registration.save();
             return res.status(200).send({ message: "Registration Successfull" });
         }
@@ -62,11 +68,12 @@ export const registerForEvent = async (req, res) => {
 export const getRegistrations = async (req, res) => {
     try {
         const userId = req.user._id;
-        const registrations = await registrationModal.find({ userId });
-        const eventIds = registrations.map(reg => reg.eventId);
-        const events = await eventModal.find({
-            _id: { $in: eventIds.map(id => new mongoose.Types.ObjectId(id)) }
-        });
+        const registrations = await registrationModal
+            .find({ userId })
+            .populate("eventId");
+
+        const events = registrations.map(reg => reg.eventId);
+
         res.status(200).send({ events });
     } catch (error) {
         const { status, errorMessage } = handleException(error.message);

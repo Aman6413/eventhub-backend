@@ -2,6 +2,7 @@ import userModal from "../models/user.js";
 import { ERROR_CODES } from "../utilities/constants.js";
 import { handleException } from "../utilities/handleException.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 const JWT_KEY = process.env.JWT_KEY || "";
 
@@ -11,7 +12,15 @@ export const registerUser = async (req, res) => {
         const { name, email, password, role } = body;
         const existingUser = await userModal.findOne({ email });
         if (existingUser) throw new Error(ERROR_CODES.USER_EXISTS);
-        const user = new userModal({ name, email, password, role });
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = new userModal({
+            name,
+            email,
+            password: hashedPassword,
+            role,
+        });
+
         const response = await user.save();
         const token = jwt.sign({ id: response._id }, JWT_KEY, { expiresIn: '7d' });
         return res.status(200).send({ token: token, name: response.name, email: response.email, role: response.role });
@@ -30,8 +39,12 @@ export const loginUser = async (req, res) => {
         //email and password
         const { email, password } = req.body;
         //Check if user exits
-        const user = await userModal.findOne({ email, password });
-        if (!user) throw new Error(ERROR_CODES.INVALID_CREDENTIALS)
+        const user = await userModal.findOne({ email });
+        if (!user) throw new Error(ERROR_CODES.INVALID_CREDENTIALS);
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) throw new Error(ERROR_CODES.INVALID_CREDENTIALS);
+
         //Generate token
         const token = jwt.sign({ id: user._id }, JWT_KEY, { expiresIn: "7d" })
         //Send response
