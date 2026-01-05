@@ -36,34 +36,55 @@ export const registerForEvent = async (req, res) => {
     try {
         const userId = req.user._id;
         const eventId = req.params.id;
-        // Check if registration already exists
+
+        // 1️⃣ Fetch event
+        const event = await eventModal.findById(eventId);
+        if (!event) {
+            return res.status(404).send({ errorMessage: "Event not found" });
+        }
+
+        // 2️⃣ Check registration deadline (if exists)
+        if (event.registrationDeadline) {
+            const today = new Date();
+            const deadline = new Date(event.registrationDeadline);
+
+            if (today > deadline) {
+                return res.status(400).send({
+                    errorMessage: "Registration closed for this event"
+                });
+            }
+        }
+
+        // 3️⃣ Check existing registration
         const existing = await registrationModal.findOne({
             userId,
             eventId: new mongoose.Types.ObjectId(eventId)
         });
 
+        // 4️⃣ Toggle logic
         if (existing) {
-            // If it exists, delete it (toggle off)
             await registrationModal.deleteOne({ _id: existing._id });
             return res.status(200).send({ message: "Registration Cancelled" });
         } else {
-            // If not, create a new one (toggle on)
             const registration = new registrationModal({
                 userId,
                 eventId: new mongoose.Types.ObjectId(eventId)
             });
             await registration.save();
-            return res.status(200).send({ message: "Registration Successfull" });
+            return res.status(200).send({ message: "Registration Successful" });
         }
+
     } catch (error) {
         const { status, errorMessage } = handleException(error.message);
-        if (status == 500) {
+        if (status === 500) {
             console.log(`Exception: ${error}`);
             return res.status(500).send();
+        } else {
+            return res.status(status).send({ errorMessage });
         }
-        else return res.status(status).send({ errorMessage })
     }
-}
+};
+
 
 export const getRegistrations = async (req, res) => {
     try {

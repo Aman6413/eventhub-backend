@@ -1,16 +1,22 @@
 import mongoose from "mongoose";
 
 const eventSchema = new mongoose.Schema({
-    title: { type: String },
+    title: { type: String, required: true },
     description: { type: String },
-    date: { type: String },
+    date: { type: String },          // Event date
     time: { type: String },
     location: { type: String },
     imageUrl: { type: String },
     contactNumber: { type: String },
-    type: { type: String }
-})
+    type: { type: String },          // Technical / Cultural / Sports
 
-const eventModal = mongoose.model("Event", eventSchema);
+    // 🔥 NEW FIELD
+    registrationDeadline: {
+        type: String,               // YYYY-MM-DD
+        required: true
+    }
+}, { timestamps: true });
 
-export default eventModal;
+const eventModel = mongoose.model("Event", eventSchema);
+
+export default eventModel;

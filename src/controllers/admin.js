@@ -6,48 +6,101 @@ import { handleException } from "../utilities/handleException.js";
 import mongoose from "mongoose";
 
 export const createEvent = async (req, res) => {
-    try {
-        //title, desc, date, time, location, imageUrl
-        const { title, description, date, time, location, imageUrl, contactNumber, type } = req.body
-        //Save event
-        const event = new eventModal({ title, description, date, time, location, imageUrl, contactNumber, type })
-        const response = await event.save();
-        //response
-        res.status(200).send({ id: response._id })
-    } catch (error) {
-        const { status, errorMessage } = handleException(error.message);
-        if (status == 500) {
-            console.log(`Exception: ${error}`);
-            return res.status(500).send();
-        }
-        else return res.status(status).send({ errorMessage })
-    }
-}
+  try {
+      const {
+          title,
+          description,
+          date,
+          time,
+          location,
+          imageUrl,
+          contactNumber,
+          type,
+          registrationDeadline   // 🔥 NEW
+      } = req.body;
+
+      // Basic validation
+      if (!registrationDeadline) {
+          return res.status(400).send({
+              errorMessage: "Registration deadline is required"
+          });
+      }
+
+      const event = new eventModal({
+          title,
+          description,
+          date,
+          time,
+          location,
+          imageUrl,
+          contactNumber,
+          type,
+          registrationDeadline
+      });
+
+      const response = await event.save();
+      res.status(200).send({ id: response._id });
+
+  } catch (error) {
+      const { status, errorMessage } = handleException(error.message);
+      if (status === 500) {
+          console.log(`Exception: ${error}`);
+          return res.status(500).send();
+      } else {
+          return res.status(status).send({ errorMessage });
+      }
+  }
+};
+
 
 export const updateEvent = async (req, res) => {
-    try {
-        const id = req.params.id;
-        const { title, description, date, time, location, imageUrl, contactNumber, type } = req.body
-        const updateFields = {}
-        if (title) updateFields.title = title;
-        if (description) updateFields.description = description;
-        if (date) updateFields.date = date;
-        if (time) updateFields.time = time;
-        if (location) updateFields.location = location;
-        if (imageUrl) updateFields.imageUrl = imageUrl;
-        if (contactNumber) updateFields.contactNumber = contactNumber;
-        if (type) updateFields.type = type;
-        const updatedEvent = await eventModal.findByIdAndUpdate(id, { $set: updateFields }, { new: true });
-        res.status(200).send(updatedEvent);
-    } catch (error) {
-        const { status, errorMessage } = handleException(error.message);
-        if (status == 500) {
-            console.log(`Exception: ${error}`);
-            return res.status(500).send();
-        }
-        else return res.status(status).send({ errorMessage })
-    }
-}
+  try {
+      const id = req.params.id;
+
+      const {
+          title,
+          description,
+          date,
+          time,
+          location,
+          imageUrl,
+          contactNumber,
+          type,
+          registrationDeadline   // 🔥 NEW
+      } = req.body;
+
+      const updateFields = {};
+
+      if (title) updateFields.title = title;
+      if (description) updateFields.description = description;
+      if (date) updateFields.date = date;
+      if (time) updateFields.time = time;
+      if (location) updateFields.location = location;
+      if (imageUrl) updateFields.imageUrl = imageUrl;
+      if (contactNumber) updateFields.contactNumber = contactNumber;
+      if (type) updateFields.type = type;
+      if (registrationDeadline)
+          updateFields.registrationDeadline = registrationDeadline;
+
+      const updatedEvent = await eventModal.findByIdAndUpdate(
+          id,
+          { $set: updateFields },
+          { new: true }
+      );
+
+      res.status(200).send(updatedEvent);
+
+  } catch (error) {
+      const { status, errorMessage } = handleException(error.message);
+      if (status === 500) {
+          console.log(`Exception: ${error}`);
+          return res.status(500).send();
+      } else {
+          return res.status(status).send({ errorMessage });
+      }
+  }
+};
+
 
 export const deleteEvent = async (req, res) => {
     const id = req.params.id;
