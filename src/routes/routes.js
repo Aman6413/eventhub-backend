@@ -4,6 +4,7 @@ import validateToken from "../middlewares/validateToken.js";
 import { createEvent, deleteEvent, getEventRegistrations, updateEvent } from "../controllers/admin.js";
 import { getEvent, getEvents, getRegistrations, registerForEvent } from "../controllers/event.js";
 import adminOnly from "../middlewares/adminOnly.js";
+import { getAdminAnalytics } from "../controllers/admin.controller.js";
 // import { googleAuth } from "../controllers/googleAuth.js";
 
 const router = express.Router();
@@ -24,5 +25,6 @@ router.get("/events", validateToken, getEvents);
 router.get("/events/:id", validateToken, getEvent);
 router.post("/events/:id/register", validateToken, registerForEvent);
 router.get("/users/me/registrations", validateToken, getRegistrations);
+router.get("/admin/analytics", validateToken, adminOnly, getAdminAnalytics);
 
 export default router;
