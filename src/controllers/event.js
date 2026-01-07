@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 import eventModal from "../models/event.js"
 import registrationModal from "../models/registration.js";
 import { handleException } from "../utilities/handleException.js";
+import getEventStatus from "../utilities/getEventStatus.js";
+import userModal from "../models/user.js";
+import { sendEmail } from "../utilities/email.js";
+import templates from "../utilities/emailTemplates.js";
 
 export const getEvents = async (req, res) => {
   try {
@@ -30,7 +34,8 @@ export const getEvents = async (req, res) => {
 
     const eventsWithCount = events.map(event => ({
       ...event,
-      registrationCount: countMap[event._id.toString()] || 0
+      registrationCount: countMap[event._id.toString()] || 0,
+      eventStatus: getEventStatus(event),
     }));
 
     res.status(200).send(eventsWithCount);
@@ -59,6 +64,7 @@ export const getEvent = async (req, res) => {
       event: {
         ...event,
         registrationCount,
+        eventStatus: getEventStatus(event),
       },
     });
 
@@ -107,13 +113,44 @@ export const registerForEvent = async (req, res) => {
           message: "Registration Cancelled",
         });
       }
-  
+
+      // 5️⃣ Capacity check
+      const registrationCount = await registrationModal.countDocuments({
+        eventId: new mongoose.Types.ObjectId(eventId),
+      });
+
+      if (event.maxRegistrations !== undefined && event.maxRegistrations !== null) {
+        if (registrationCount >= event.maxRegistrations) {
+          return res.status(400).send({ message: "Event is full" });
+        }
+      }
+
       const registration = new registrationModal({
         userId,
         eventId: new mongoose.Types.ObjectId(eventId),
       });
-  
+
       await registration.save();
+
+      // Send confirmation to student and notification to admins (async)
+      (async () => {
+        try {
+          const student = await userModal.findById(userId).lean();
+          if (student?.email) {
+            const html = templates.studentConfirmationTemplate(event, student);
+            sendEmail(student.email, `Registration confirmed: ${event.title}`, html).catch(console.error);
+          }
+
+          const admins = await userModal.find({ role: "admin" }).lean();
+          const adminHtml = templates.adminRegistrationNotificationTemplate(event, student || { email: 'unknown' });
+          admins.forEach((a) => {
+            if (a?.email) sendEmail(a.email, `New registration: ${event.title}`, adminHtml).catch(console.error);
+          });
+        } catch (e) {
+          console.error("Error sending registration emails", e);
+        }
+      })();
+
       return res.status(200).send({
         message: "Registration Successful",
       });

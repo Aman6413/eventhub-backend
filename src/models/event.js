@@ -15,6 +15,12 @@ const eventSchema = new mongoose.Schema({
         type: String,               // YYYY-MM-DD
         required: true
     }
+    ,
+    // Maximum number of allowed registrations for this event
+    maxRegistrations: {
+        type: Number,
+        required: true
+    }
 }, { timestamps: true });
 
 const eventModel = mongoose.model("Event", eventSchema);
