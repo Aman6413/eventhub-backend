@@ -169,11 +169,29 @@ export const getRegistrations = async (req, res) => {
         const userId = req.user._id;
         const registrations = await registrationModal
             .find({ userId })
-            .populate("eventId");
+            .populate("eventId")
+            .lean();
 
-        const events = registrations.map(reg => reg.eventId);
+    const events = registrations.map(reg => reg.eventId).filter(e => e);
 
-        res.status(200).send({ events });
+    const eventIds = events.map(e => e._id);
+
+    // aggregate registration counts for these events
+    const regs = await registrationModal.aggregate([
+      { $match: { eventId: { $in: eventIds } } },
+      { $group: { _id: "$eventId", count: { $sum: 1 } } }
+    ]);
+
+    const countMap = {};
+    regs.forEach(r => { countMap[r._id.toString()] = r.count; });
+
+    const enriched = events.map(event => ({
+      ...event,
+      registrationCount: countMap[event._id.toString()] || 0,
+      eventStatus: getEventStatus(event),
+    }));
+
+    res.status(200).send({ events: enriched });
     } catch (error) {
         const { status, errorMessage } = handleException(error.message);
         if (status == 500) {

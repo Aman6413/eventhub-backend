@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema({
     //     default: "local", // local | google
     // },
     avatar: String,
+    // Password reset OTP
+    resetOtp: { type: String, default: null },
+    resetOtpExpiry: { type: Date, default: null },
 })
 
 const userModal = mongoose.model("User", userSchema);

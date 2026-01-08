@@ -24,7 +24,8 @@ export const getAdminAnalytics = async (req, res) => {
 
       if (event) {
         topEvent = {
-          _id: event._id,          // 🔥 REQUIRED
+          _id: event._id,
+          eventId: event._id,       // 🔥 Include eventId for navigation
           title: event.title,
           count: topEventAgg[0].count,
         };

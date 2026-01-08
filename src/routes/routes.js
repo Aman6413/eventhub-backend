@@ -1,18 +1,21 @@
 import express from "express";
-import { loginUser, registerUser } from "../controllers/auth.js";
+import { loginUser, registerUser, forgotPassword, verifyOtp, resetPassword, getProfile, changePassword } from "../controllers/auth.js";
 import validateToken from "../middlewares/validateToken.js";
 import { createEvent, deleteEvent, getEventRegistrations, updateEvent } from "../controllers/admin.js";
 import { getEvent, getEvents, getRegistrations, registerForEvent } from "../controllers/event.js";
 import adminOnly from "../middlewares/adminOnly.js";
 import { getAdminAnalytics } from "../controllers/admin.controller.js";
-// import { googleAuth } from "../controllers/googleAuth.js";
 
 const router = express.Router();
 
 router.post("/auth/register", registerUser);
 router.post("/auth/login", loginUser);
+router.post("/auth/forgot-password", forgotPassword);
+router.post("/auth/verify-otp", verifyOtp);
+router.post("/auth/reset-password", resetPassword);
+router.get("/users/me", validateToken, getProfile);
+router.put("/users/change-password", validateToken, changePassword);
 router.post("/admin/events", validateToken, adminOnly, createEvent);
-// router.post("/auth/google", googleAuth);
 router.put("/admin/events/:id", validateToken, adminOnly, updateEvent);
 router.delete("/admin/events/:id", validateToken, adminOnly, deleteEvent);
 router.get(

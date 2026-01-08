@@ -1,11 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config();
-// console.log(process.env);
 import "./db/mongoose.js";
 import express from "express";
 import router from "./routes/routes.js";
 import cors from "cors";
-// import aiRoutes from "./routes/ai.routes.js";
 
 const port = process.env.PORT || "";
 
@@ -21,8 +19,6 @@ app.use((req, res, next) => {
 })
 
 app.use("/api", router);
-
-// app.use("/api/ai", aiRoutes);
 
 app.listen(parseInt(port), () => {
     console.log("Server running on port: ", port);

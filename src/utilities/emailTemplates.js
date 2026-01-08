@@ -63,10 +63,31 @@ export const adminRegistrationNotificationTemplate = (event, student) => {
   return wrap('New Registration', body);
 };
 
+
+
+export const otpTemplate = (otp) => {
+  const body = `
+    <p>Use the following One-Time Password (OTP) to reset your EventHub password:</p>
+    <h2 style="font-family:monospace;background:#f3f4f6;padding:12px;border-radius:6px;display:inline-block">${otp}</h2>
+    <p style="margin-top:8px">This OTP is valid for 15 minutes.</p>
+  `;
+  return wrap('Password Reset OTP', body);
+};
+
+export const passwordResetSuccessTemplate = () => {
+  const body = `
+    <p>Your password has been successfully reset. If you did not perform this action, please contact support immediately.</p>
+  `;
+  return wrap('Password Reset Successful', body);
+};
+
+// update default export to include new helpers
 export default {
   newEventTemplate,
   updatedEventTemplate,
   cancelledEventTemplate,
   studentConfirmationTemplate,
   adminRegistrationNotificationTemplate,
+  otpTemplate,
+  passwordResetSuccessTemplate,
 };
